@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Gallery</title>
+    <style>
+        /* CSS Reset */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background-color: #fafafa;
+            padding: 20px;
+        }
+
+        body.modal-open { 
+            overflow: hidden; 
+        }
+
+        /* Photo Grid */
+        .gallery-grid {
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); 
+            gap: 15px; 
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .gallery-item {
+            aspect-ratio: 1 / 1; 
+            cursor: pointer;
+            background-color: #efefef; 
+            overflow: hidden;
+        }
+        
+        .gallery-item img {
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+        }
+
+        /* Lightbox (Zoom-in Modal) */
+        .lightbox {
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85); 
+            z-index: 1000;
+            justify-content: center; 
+            align-items: center; 
+            padding: 20px;
+        }
+        
+        .lightbox img {
+            max-width: 90vw; 
+            max-height: 90vh; 
+            object-fit: contain;
+        }
+        
+        .lightbox-close {
+            position: absolute; 
+            top: 20px; 
+            right: 30px; 
+            color: white;
+            font-size: 40px; 
+            font-weight: bold; 
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Dynamic Photo Grid -->
+    <div class="gallery-grid" id="gallery-grid"></div>
+
+    <!-- Lightbox Modal for Zooming Pictures -->
+    <div id="lightbox" class="lightbox">
+        <span class="lightbox-close">&times;</span>
+        <img id="lightbox-img" src="" alt="Zoomed Photo">
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        const imageIds = [
+            "1524504388266-eb10d196f7c1", "1517841905240-472988babdf9", "1534528741775-53994a69daeb", "1515886657613-9f3515b0c78f", "1494790108377-be9c29b29330",
+            "1529626455594-4ff0802cfb7e", "1503185912284-5271ff81b9a8", "1512288040182-414eb1bd420b", "1488426862026-3ee34a7d66df", "1516443424164-839eafb7deba",
+            "1513201099705-a9746e1e201f", "1525879000488-bff3b1c387cf", "1520069853334-8e41ebbf8f47", "1512330379961-d7790b9b3e94", "1523264629844-4050eb938ae2",
+            "1520975611394-b1539265691a", "1506164287955-46700c284fc0", "1526435948943-4dc9757659e9", "1520024479901-70e60822601d", "1522778393393-54fbd6b4719e",
+            "1511556820780-d912e42b4980", "1533104618037-ce50f38b43bd", "1522858102434-2e21b777a8d5", "1518576402804-03f750b3f8db", "1518049104033-b9db9a538bd5",
+            "1500917293891-ef795e70e1f6", "1499952127939-9bbf5af6c51c", "1517365830460-955ce3ccd263", "1502823403499-6ccfcf4fb453", "1500522144261-ea64433fb615",
+            "1492106087820-71f1a00d2b11", "1509967419530-da38b4704bc6", "1485893086445-ed75865251e0", "1521252159022-af1115d0d82a", "1508214751196-bcfd4ca60f91",
+            "1515372039744-b8f02a3ae446", "1528892952291-0d526e04ed94", "1500336624523-d727130c3328", "1510227282588-9d8ddcb061d4", "1491349174775-aaaf31155258",
+            "1512316625870-179af7db2bc9", "1514315384763-ba401779410f", "1531123897727-8f129e1688ce", "1515121061221-7d6ce20da9ee", "1502323777036-14dbf55a1d62",
+            "1526510747491-58f928ec8708", "1518140417240-3b47120a28f1", "1531746020798-e6953c6e8e04", "1524250502761-1ac6f2e30d43", "1469334031218-e382a71b716b"
+        ];
+
+        const galleryGrid = document.getElementById('gallery-grid');
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+        const lightboxClose = document.querySelector('.lightbox-close');
+
+        // Render images
+        imageIds.forEach((id) => {
+            const thumbUrl = `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=600&q=80`;
+            const highResUrl = `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=1200&q=80`;
+            
+            const fallbackThumbUrl = `https://picsum.photos/seed/${id}/600/600`;
+            const fallbackHighResUrl = `https://picsum.photos/seed/${id}/1200/1200`;
+
+            const item = document.createElement('div');
+            item.className = 'gallery-item';
+            
+            item.innerHTML = `
+                <img src="${thumbUrl}" alt="Gallery Image" loading="lazy" 
+                     onerror="this.onerror=null; this.src='${fallbackThumbUrl}'; this.dataset.fallback='true';">
+            `;
+
+            // Click Event to trigger Lightbox
+            item.addEventListener('click', () => {
+                const imgEl = item.querySelector('img');
+                
+                if (imgEl.dataset.fallback === 'true') {
+                    lightboxImg.src = fallbackHighResUrl;
+                } else {
+                    lightboxImg.src = highResUrl;
+                }
+                
+                lightbox.style.display = 'flex';
+                document.body.classList.add('modal-open');
+            });
+
+            galleryGrid.appendChild(item);
+        });
+
+        // Close Lightbox function
+        const closeLightbox = () => {
+            lightbox.style.display = 'none';
+            document.body.classList.remove('modal-open');
+            lightboxImg.src = ''; 
+        };
+
+        lightboxClose.addEventListener('click', closeLightbox);
+
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox) {
+                closeLightbox();
+            }
+        });
+    </script>
+</body>
+</html>
